@@ -14,6 +14,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Select Latest Xcode 16
+        run: |
+          XCODE_16=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | tail -n 1)
+          if [ -n "$XCODE_16" ]; then
+            echo "Selecting $XCODE_16"
+            sudo xcode-select -s "$XCODE_16/Contents/Developer"
+          else
+            echo "Xcode 16 not found, checking all available Xcodes:"
+            ls -d /Applications/Xcode*
+          fi
+          xcodebuild -version
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
