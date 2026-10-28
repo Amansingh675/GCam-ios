@@ -1,0 +1,19 @@
+# Ignore large APK file to prevent GitHub 100MB file limit errors
+*.apk
+*.zip
+*.tar.gz
+
+# Xcode & Mac
+DerivedData/
+build/
+*.xcodeproj
+*.xcworkspace
+.DS_Store
+*.xcuserstate
+xcuserdata/
+*.ipa
+Payload/
+
+# Python cache
+__pycache__/
+*.pyc
