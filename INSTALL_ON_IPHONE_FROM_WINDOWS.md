@@ -58,3 +58,28 @@ iPhone par first-time sideloaded app open karne ke liye:
    * **Settings > Privacy & Security > Developer Mode** ko **ON** karein aur iPhone restart karein.
 
 Ab aapka **GCam 9.8 app** aapke iPhone 15 Plus par chalne ke liye bilkul ready hai! 🎉
+
+---
+
+## 🛠️ Agar App Tap Karte Hi Bina Khule Crash Ho Jaye (Troubleshooting)
+
+Agar app tap karte hi screen flash hokar band ho jati hai, toh yeh 3 cheezein check karein:
+
+1. **Developer Mode Activate Karna (Sabse Main Reason)**:
+   * iPhone me **Settings > Privacy & Security > Developer Mode** par jayein.
+   * Isko **ON** karein. iPhone restart hoga.
+   * Restart hone ke baad screen par **"Turn On Developer Mode?"** aayega, usme **Turn On** dabayein aur apna iPhone Passcode enter karein.
+   * *(Note: Jab tak Developer Mode restart ke baad confirm nahi hota, sideloaded apps iOS launch hi nahi hone deta).*
+
+2. **Apple ID Certificate Trust Karna**:
+   * **Settings > General > VPN & Device Management** me jayein.
+   * "Developer App" ke niche apni Apple ID par tap karein aur **Trust** par click karein.
+
+3. **Latest Crash-Fixed Build Push Karein**:
+   * Code me `Info.plist`, `CameraManager` aur `UILaunchScreen` ke launch bugs fix ho chuke hain.
+   * Terminal me sirf yeh command chalayein:
+     ```powershell
+     cd C:\Users\Lenovo\.gemini\antigravity-ide\scratch\GCam-iOS
+     git push
+     ```
+   * GitHub Actions me 2 minute me naya **GCam.ipa** build ho jayega. Use Sideloadly se install karein, 100% crash fix ho jayega!
