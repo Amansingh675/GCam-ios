@@ -3,25 +3,31 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <string>en</string>
     <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
+    <string>GCam</string>
     <key>CFBundleIdentifier</key>
     <string>com.computational.gcam</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
     <string>GCam</string>
+    <key>CFBundleDisplayName</key>
+    <string>GCam</string>
     <key>CFBundlePackageType</key>
-    <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+    <string>APPL</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
     <key>NSCameraUsageDescription</key>
     <string>GCam requires camera access to capture computational HDR+ bursts and bypass default ISP tone mapping.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>GCam requires access to your photo library to save and view your processed HDR+ photos.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>GCam requires permission to save your processed HDR+ photos to your Photos library.</string>
     <key>UIRequiredDeviceCapabilities</key>

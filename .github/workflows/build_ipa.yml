@@ -49,6 +49,9 @@ jobs:
         run: |
           mkdir -p Payload
           cp -r DerivedData/Build/Products/Release-iphoneos/GCam.app Payload/
+          chmod +x Payload/GCam.app/GCam
+          echo "Verifying Info.plist inside app bundle:"
+          plutil -p Payload/GCam.app/Info.plist | grep -E "CFBundleExecutable|CFBundleIdentifier|CFBundlePackageType"
           zip -qr GCam.ipa Payload
 
       - name: Upload IPA Artifact

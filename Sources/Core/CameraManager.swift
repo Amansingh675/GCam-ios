@@ -55,9 +55,14 @@ public final class CameraManager: NSObject, ObservableObject {
         captureSession.beginConfiguration()
         captureSession.sessionPreset = .photo
         
-        // 1. Configure iPhone 15 Plus Dual Wide Camera (Ultra Wide + 48MP Wide with 2x Crop)
+        // 1. Configure iPhone Cameras (Dual Wide, Wide, Triple, Dual)
         let deviceDiscovery = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInDualWideCamera, .builtInWideAngleCamera],
+            deviceTypes: [
+                .builtInDualWideCamera,
+                .builtInWideAngleCamera,
+                .builtInTripleCamera,
+                .builtInDualCamera
+            ],
             mediaType: .video,
             position: .back
         )
@@ -75,11 +80,13 @@ public final class CameraManager: NSObject, ObservableObject {
                 captureSession.addInput(input)
             }
             
-            // 2. Photo Output Configuration (Enable High Res & RAW capture)
+            // 2. Photo Output Configuration (Enable High Res & RAW capture safely)
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
                 if #available(iOS 16.0, *) {
-                    photoOutput.maxPhotoDimensions = CMVideoDimensions(width: 8064, height: 6048)
+                    if let maxDim = device.activeFormat.supportedMaxPhotoDimensions.max(by: { ($0.width * $0.height) < ($1.width * $1.height) }) {
+                        photoOutput.maxPhotoDimensions = maxDim
+                    }
                 }
                 photoOutput.maxPhotoQualityPrioritization = .quality
             }

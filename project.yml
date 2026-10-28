@@ -2,13 +2,13 @@ name: GCam
 options:
   bundleIdPrefix: com.computational
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "16.0"
   xcodeVersion: "15.4" # Ensures backward compatibility with Xcode 15 and 16
 targets:
   GCam:
     type: application
     platform: iOS
-    deploymentTarget: "17.0"
+    deploymentTarget: "16.0"
     sources:
       - path: Sources
     info:
@@ -22,5 +22,7 @@ targets:
       CODE_SIGNING_ALLOWED: NO
       CODE_SIGN_IDENTITY: ""
       GENERATE_INFOPLIST_FILE: NO
+      INFOPLIST_FILE: Info.plist
+      INFOPLIST_PREPROCESS: YES
       SWIFT_VERSION: "5.9"
       ENABLE_USER_SCRIPT_SANDBOXING: NO
