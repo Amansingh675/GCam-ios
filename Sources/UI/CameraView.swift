@@ -213,3 +213,31 @@ struct GridOverlay: View {
         }
     }
 }
+
+/// Minimalist GCam Focus Ring with Tick Marks
+struct FocusIndicatorView: View {
+    @State private var isPulsing: Bool = false
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color.yellow.opacity(0.9), lineWidth: 1.5)
+                .frame(width: isPulsing ? 64 : 76, height: isPulsing ? 64 : 76)
+            
+            // Four tick marks
+            ForEach(0..<4) { i in
+                Rectangle()
+                    .fill(Color.yellow)
+                    .frame(width: 1.5, height: 6)
+                    .offset(y: -36)
+                    .rotationEffect(.degrees(Double(i) * 90))
+            }
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.25)) {
+                isPulsing = true
+            }
+        }
+    }
+}
+

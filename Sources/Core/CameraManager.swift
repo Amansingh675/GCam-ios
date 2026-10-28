@@ -78,7 +78,9 @@ public final class CameraManager: NSObject, ObservableObject {
             // 2. Photo Output Configuration (Enable High Res & RAW capture)
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
-                photoOutput.isHighResolutionCaptureEnabled = true
+                if #available(iOS 16.0, *) {
+                    photoOutput.maxPhotoDimensions = CMVideoDimensions(width: 8064, height: 6048)
+                }
                 photoOutput.maxPhotoQualityPrioritization = .quality
             }
             
