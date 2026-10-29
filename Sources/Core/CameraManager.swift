@@ -12,7 +12,6 @@ public final class CameraManager: NSObject, ObservableObject {
     public let captureSession = AVCaptureSession()
     private var activeDevice: AVCaptureDevice?
     private let photoOutput = AVCapturePhotoOutput()
-    private let videoDataOutput = AVCaptureVideoDataOutput()
     
     private let sessionQueue = DispatchQueue(label: "com.gcam.sessionQueue")
     
@@ -23,9 +22,6 @@ public final class CameraManager: NSObject, ObservableObject {
     
     @Published public var isSessionRunning: Bool = false
     @Published public var permissionGranted: Bool = false
-    
-    // Live preview frame callback
-    public var onFrameUpdate: ((CVPixelBuffer) -> Void)?
     
     private override init() {
         super.init()
@@ -55,11 +51,11 @@ public final class CameraManager: NSObject, ObservableObject {
         captureSession.beginConfiguration()
         captureSession.sessionPreset = .photo
         
-        // 1. Configure iPhone Cameras (Dual Wide, Wide, Triple, Dual)
+        // 1. Configure iPhone Cameras (Prioritize Physical Wide Angle for full RAW/48MP support)
         let deviceDiscovery = AVCaptureDevice.DiscoverySession(
             deviceTypes: [
-                .builtInDualWideCamera,
                 .builtInWideAngleCamera,
+                .builtInDualWideCamera,
                 .builtInTripleCamera,
                 .builtInDualCamera
             ],
@@ -80,28 +76,17 @@ public final class CameraManager: NSObject, ObservableObject {
                 captureSession.addInput(input)
             }
             
-            // 2. Photo Output Configuration (Enable High Res & RAW capture safely)
+            // 2. Photo Output Configuration (Safe high-res & RAW burst setup)
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
-                if #available(iOS 16.0, *) {
-                    if let maxDim = device.activeFormat.supportedMaxPhotoDimensions.max(by: { ($0.width * $0.height) < ($1.width * $1.height) }) {
-                        photoOutput.maxPhotoDimensions = maxDim
-                    }
+                
+                // Safely set quality prioritization if supported
+                if photoOutput.maxPhotoQualityPrioritizationSupported {
+                    photoOutput.maxPhotoQualityPrioritization = .quality
                 }
-                photoOutput.maxPhotoQualityPrioritization = .quality
             }
             
-            // 3. Video preview stream for live viewfinder
-            if captureSession.canAddOutput(videoDataOutput) {
-                captureSession.addOutput(videoDataOutput)
-                videoDataOutput.videoSettings = [
-                    kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
-                ]
-                videoDataOutput.alwaysDiscardsLateVideoFrames = true
-                videoDataOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "com.gcam.videoQueue"))
-            }
-            
-            // 4. MGC Hardware Optimization: Smooth Auto-Focus & Neutral WB
+            // 3. MGC Hardware Optimization: Smooth Auto-Focus & Neutral WB
             try device.lockForConfiguration()
             if device.isSmoothAutoFocusSupported {
                 device.isSmoothAutoFocusEnabled = true
@@ -174,11 +159,19 @@ public final class CameraManager: NSObject, ObservableObject {
         let photoSettings: AVCapturePhotoSettings
         if photoOutput.availableRawPhotoPixelFormatTypes.contains(where: { $0 == kCVPixelFormatType_14Bayer_RGGB }) {
             photoSettings = AVCapturePhotoSettings(rawPixelFormatType: kCVPixelFormatType_14Bayer_RGGB)
+        } else if let validFormat = photoOutput.availablePhotoPixelFormatTypes.first {
+            photoSettings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String: validFormat])
         } else {
-            photoSettings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
+            photoSettings = AVCapturePhotoSettings()
         }
         
-        photoSettings.photoQualityPrioritization = .speed
+        // Never exceed maxPhotoQualityPrioritization to prevent NSInvalidArgumentException
+        if photoOutput.maxPhotoQualityPrioritization == .speed {
+            photoSettings.photoQualityPrioritization = .speed
+        } else {
+            photoSettings.photoQualityPrioritization = .balanced
+        }
+        
         photoOutput.capturePhoto(with: photoSettings, delegate: self)
     }
     
@@ -312,10 +305,4 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
     }
 }
 
-// MARK: - AVCaptureVideoDataOutputSampleBufferDelegate (Live Viewfinder)
-extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        onFrameUpdate?(pixelBuffer)
-    }
-}
+

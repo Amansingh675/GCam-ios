@@ -121,8 +121,9 @@ public final class HDRFusionEngine {
                 
                 if index == 0 {
                     referenceTexture = frameTexture
-                    self.copyTexture(from: frameTexture, to: accumulatorTexture, commandQueue: commandQueue)
-                } else if let ref = referenceTexture, let fusionPipeline = self.fusionPipelineState {
+                }
+                
+                if let ref = referenceTexture, let fusionPipeline = self.fusionPipelineState {
                     self.executeFusionPass(
                         current: frameTexture,
                         reference: ref,

@@ -72,6 +72,13 @@ kernel void fuseFrames(
     }
 
     float4 curr = currentFrame.read(gid);
+    
+    // Base frame: direct write to accumulator without needing blit copy
+    if (params.frameIndex == 0) {
+        accumulator.write(float4(curr.rgb, 1.0), gid);
+        return;
+    }
+    
     float4 ref  = referenceFrame.read(gid);
     float4 acc  = accumulator.read(gid);
 
