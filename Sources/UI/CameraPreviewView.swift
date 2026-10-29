@@ -13,12 +13,19 @@ public struct CameraPreviewView: UIViewRepresentable {
         let view = PreviewUIView()
         view.videoPreviewLayer.session = session
         view.videoPreviewLayer.videoGravity = .resizeAspectFill
-        view.videoPreviewLayer.connection?.videoOrientation = .portrait
+        if let conn = view.videoPreviewLayer.connection, conn.isVideoOrientationSupported {
+            conn.videoOrientation = .portrait
+        }
         return view
     }
     
     public func updateUIView(_ uiView: PreviewUIView, context: Context) {
-        // Automatically keeps layer frame updated with view layout
+        if uiView.videoPreviewLayer.session != session {
+            uiView.videoPreviewLayer.session = session
+        }
+        if let conn = uiView.videoPreviewLayer.connection, conn.isVideoOrientationSupported {
+            conn.videoOrientation = .portrait
+        }
     }
 }
 
