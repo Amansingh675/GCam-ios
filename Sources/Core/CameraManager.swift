@@ -171,8 +171,8 @@ public final class CameraManager: NSObject, ObservableObject {
         }
         
         let photoSettings: AVCapturePhotoSettings
-        if photoOutput.availableRawPhotoPixelFormatTypes.contains(where: { $0 == kCVPixelFormatType_14Bayer_RGGB }) {
-            photoSettings = AVCapturePhotoSettings(rawPixelFormatType: kCVPixelFormatType_14Bayer_RGGB)
+        if photoOutput.availablePhotoPixelFormatTypes.contains(where: { $0 == kCVPixelFormatType_32BGRA }) {
+            photoSettings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA])
         } else if let validFormat = photoOutput.availablePhotoPixelFormatTypes.first {
             photoSettings = AVCapturePhotoSettings(format: [kCVPixelBufferPixelFormatTypeKey as String: validFormat])
         } else {
@@ -293,28 +293,62 @@ public final class CameraManager: NSObject, ObservableObject {
             }
         }
     }
+    
+    private func pixelBufferFromData(_ data: Data) -> CVPixelBuffer? {
+        guard let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage else { return nil }
+        let width = cgImage.width
+        let height = cgImage.height
+        var pixelBuffer: CVPixelBuffer?
+        let attrs = [
+            kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
+            kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue
+        ] as CFDictionary
+        let status = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, attrs, &pixelBuffer)
+        guard status == kCVReturnSuccess, let buffer = pixelBuffer else { return nil }
+        CVPixelBufferLockBaseAddress(buffer, [])
+        let pixelData = CVPixelBufferGetBaseAddress(buffer)
+        let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
+        let context = CGContext(data: pixelData, width: width, height: height, bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: rgbColorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue)
+        context?.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        CVPixelBufferUnlockBaseAddress(buffer, [])
+        return buffer
+    }
 }
 
 // MARK: - AVCapturePhotoCaptureDelegate
 extension CameraManager: AVCapturePhotoCaptureDelegate {
     public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard error == nil, let pixelBuffer = photo.pixelBuffer else {
-            print("⚠️ Frame capture dropped or failed")
-            return
-        }
-        
         sessionQueue.async { [weak self] in
             guard let self = self else { return }
-            self.burstBuffers.append(pixelBuffer)
             
-            DispatchQueue.main.async {
-                self.currentSettings?.processingProgress = Float(self.burstBuffers.count) / Float(self.expectedBurstCount) * 0.4
+            if let error = error {
+                print("❌ Capture error: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.currentSettings?.isProcessing = false
+                }
+                return
             }
             
-            self.fireBurstSequence(
-                targetCount: self.expectedBurstCount,
-                evBias: self.currentSettings?.hdrMode.exposureBiasEV ?? -1.0
-            )
+            var bufferToAppend = photo.pixelBuffer
+            if bufferToAppend == nil, let photoData = photo.fileDataRepresentation() {
+                bufferToAppend = self.pixelBufferFromData(photoData)
+            }
+            
+            if let buffer = bufferToAppend {
+                self.burstBuffers.append(buffer)
+                DispatchQueue.main.async {
+                    self.currentSettings?.processingProgress = Float(self.burstBuffers.count) / Float(self.expectedBurstCount) * 0.4
+                }
+            }
+            
+            if self.burstBuffers.count >= self.expectedBurstCount || bufferToAppend == nil {
+                self.finishBurstAndProcess()
+            } else {
+                self.fireBurstSequence(
+                    targetCount: self.expectedBurstCount,
+                    evBias: self.currentSettings?.hdrMode.exposureBiasEV ?? -1.0
+                )
+            }
         }
     }
 }
