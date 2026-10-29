@@ -79,11 +79,7 @@ public final class CameraManager: NSObject, ObservableObject {
             // 2. Photo Output Configuration (Safe high-res & RAW burst setup)
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
-                
-                // Safely set quality prioritization if supported
-                if photoOutput.maxPhotoQualityPrioritizationSupported {
-                    photoOutput.maxPhotoQualityPrioritization = .quality
-                }
+                photoOutput.maxPhotoQualityPrioritization = .quality
             }
             
             // 3. MGC Hardware Optimization: Smooth Auto-Focus & Neutral WB
