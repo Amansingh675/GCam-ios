@@ -74,8 +74,11 @@ public struct ShutterButton: View {
                 .disabled(settings.isProcessing)
             }
             
-            // 3. Camera Switcher / Mode Placeholder
-            Button(action: {}) {
+            // 3. Camera Switcher (Flip Front/Rear)
+            Button(action: {
+                triggerHapticFeedback()
+                CameraManager.shared.switchCamera()
+            }) {
                 Circle()
                     .fill(Color.white.opacity(0.15))
                     .frame(width: 52, height: 52)

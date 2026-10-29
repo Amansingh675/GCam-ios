@@ -26,6 +26,20 @@
     <array>
         <string>iPhoneOS</string>
     </array>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon.png</string>
+    <key>CFBundleIcons</key>
+    <dict>
+        <key>CFBundlePrimaryIcon</key>
+        <dict>
+            <key>CFBundleIconFiles</key>
+            <array>
+                <string>AppIcon</string>
+            </array>
+            <key>UIPrerenderedIcon</key>
+            <true/>
+        </dict>
+    </dict>
     <key>UILaunchScreen</key>
     <dict/>
     <key>NSCameraUsageDescription</key>

@@ -50,24 +50,39 @@ public final class CameraManager: NSObject, ObservableObject {
         }
     }
     
+    private var currentPosition: AVCaptureDevice.Position = .back
+    
+    public func switchCamera() {
+        sessionQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.currentPosition = self.currentPosition == .back ? .front : .back
+            self.setupSession()
+        }
+    }
+    
     private func setupSession() {
         captureSession.beginConfiguration()
         captureSession.sessionPreset = .photo
         
-        // 1. Configure iPhone Cameras (Prioritize Physical Wide Angle for full RAW/48MP support)
+        // Remove existing inputs when switching
+        for input in captureSession.inputs {
+            captureSession.removeInput(input)
+        }
+        
+        // 1. Configure iPhone Cameras for current position (Rear 48MP or Front TrueDepth)
         let deviceDiscovery = AVCaptureDevice.DiscoverySession(
             deviceTypes: [
                 .builtInWideAngleCamera,
                 .builtInDualWideCamera,
                 .builtInTripleCamera,
-                .builtInDualCamera
+                .builtInUltraWideCamera
             ],
             mediaType: .video,
-            position: .back
+            position: currentPosition
         )
         
         guard let device = deviceDiscovery.devices.first else {
-            print("❌ Camera device unavailable")
+            print("❌ Camera device unavailable for position \(currentPosition.rawValue)")
             captureSession.commitConfiguration()
             return
         }
