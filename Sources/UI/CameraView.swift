@@ -156,6 +156,9 @@ public struct CameraView: View {
             }
         }
         .statusBar(hidden: true)
+        .onAppear {
+            cameraManager.checkPermissions()
+        }
         .sheet(isPresented: $settings.isMGCPreferencesOpen) {
             MGCPreferencesView(settings: settings)
         }

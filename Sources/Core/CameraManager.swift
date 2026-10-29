@@ -25,13 +25,14 @@ public final class CameraManager: NSObject, ObservableObject {
     
     private override init() {
         super.init()
-        checkPermissions()
     }
     
     public func checkPermissions() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            self.permissionGranted = true
+            DispatchQueue.main.async {
+                self.permissionGranted = true
+            }
             sessionQueue.async { self.setupSession() }
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
@@ -43,7 +44,9 @@ public final class CameraManager: NSObject, ObservableObject {
                 }
             }
         default:
-            self.permissionGranted = false
+            DispatchQueue.main.async {
+                self.permissionGranted = false
+            }
         }
     }
     
@@ -76,10 +79,10 @@ public final class CameraManager: NSObject, ObservableObject {
                 captureSession.addInput(input)
             }
             
-            // 2. Photo Output Configuration (Safe high-res & RAW burst setup)
+            // 2. Photo Output Configuration (Set prioritization BEFORE adding to session)
+            photoOutput.maxPhotoQualityPrioritization = .quality
             if captureSession.canAddOutput(photoOutput) {
                 captureSession.addOutput(photoOutput)
-                photoOutput.maxPhotoQualityPrioritization = .quality
             }
             
             // 3. MGC Hardware Optimization: Smooth Auto-Focus & Neutral WB
